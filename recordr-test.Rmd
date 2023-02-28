@@ -1,0 +1,142 @@
+---
+title: "Tutorial Quiz Questions in `learnr`"
+output:
+  learnr::tutorial:
+runtime: shiny_prerendered
+tutorial:
+  # id: "com.example.tutorials.my-first-tutorial"
+  version: 2.18
+  # user_id: "barret"
+description: >
+  This is a test for DataTrail
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE)
+tutorial_options(exercise.eval = FALSE)
+
+## This code needs more work but it can in essence records answers and info about the user
+new_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+    cat(tutorial_id, " (", tutorial_version, "): ", user_id, ", ", event, ", ", data$label, ", ", data$answers, ", ", data$correct, "\n", sep = "")
+}
+
+options(tutorial.event_recorder = new_recorder)
+
+```
+
+Authentication for writing answers to a google sheets
+
+```{r global, include=FALSE}
+#### Code for authenticating to a googlesheet to write grades to
+library(DT)
+library(gsheet)
+library(magrittr)
+library(shiny)
+library(googlesheets4)
+library(googledrive)
+
+authenticate <- function() {
+  # designate project-specific cache
+  options(gargle_oauth_cache = ".secrets")
+
+  # check the value of the option, if you like
+  gargle::gargle_oauth_cache()
+
+  if (interactive()) {
+    googlesheets4::gs4_deauth()
+    googlesheets4::gs4_auth(
+      email = "cansav09@gmail.com",
+      path = NULL,
+      scopes = c("https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"),
+      # Get new token if it doesn't exist
+      cache = ".secrets/",
+      use_oob = FALSE,
+      token = NULL
+    )
+  } else {
+    googlesheets4::gs4_deauth()
+    googlesheets4::gs4_auth(
+      email = "cansav09@gmail.com",
+      scopes = c("https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"),
+      cache = ".secrets/"
+    )
+  }
+}
+```
+
+## Overview
+
+Ask the student to give their email. If it is in our database, we will record it. But we can send them their final grade regardless. 
+
+```{r email, echo=FALSE}
+question_text(
+  "Enter your email",
+  answer_fn(function(value) {
+    if (grepl("^[[:alnum:].-_]+@[[:alnum:].-]+$", value)) {
+      correct(messages = "Thanks for giving your email. Now your grade will be logged")
+    } else {
+      incorrect(messages = "This doesn't look like an email")
+    }
+  })
+)
+```
+
+
+Can include multiple choice questions like so:
+
+```{r letter-a, echo=FALSE}
+question(
+  "What number is the letter A in the English alphabet?",
+  answer("8"),
+  answer("14"),
+  answer("1", correct = TRUE),
+  answer("23")
+)
+```
+
+
+```{r install-swirl, echo=FALSE}
+install.packages("swirl", repos='http://cran.us.r-project.org')
+library("swirl")
+swirl::install_course("DataTrail_02_Getting_Data")
+```
+
+Include some text here about how to go complete a swirl module
+
+```{r swirl-code, echo=FALSE}
+question_text("Enter your swirl code.",
+  answer_fn(function(value) {
+    if (grepl(".+(HEri|Gu8m|sm8p|sRVV|s7ST|k0it|gZLu|bRkJ|xouE|23nK).+", value)) {
+      correct(messages = "Great job completing the swirl module!")
+    } else {
+      incorrect(messages = "Did you get this code from this chapter's swirl module?")
+    }
+  }
+)
+)
+```
+
+```{r}
+## Include a "final submit" button so the student can send off their quiz answers
+
+```
+
+
+```{r}
+## Look for recognized emails in a given database and only record the answers from those
+
+```
+
+
+```{r}
+## Calculate a total score/grade for this quiz submission
+
+```
+
+
+```{r}
+### Code to write answers to googlesheet
+
+```
+
