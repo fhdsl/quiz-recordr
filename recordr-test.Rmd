@@ -3,6 +3,8 @@ title: "Tutorial Quiz Questions in `learnr`"
 output:
   learnr::tutorial:
 runtime: shiny_prerendered
+resource_files:
+- .secrets/9566fe0643cfe888fecd0b72f870afec_cansav09@gmail.com
 tutorial:
   # id: "com.example.tutorials.my-first-tutorial"
   version: 2.18
@@ -15,17 +17,7 @@ description: >
 library(learnr)
 knitr::opts_chunk$set(echo = TRUE, highlight = TRUE)
 tutorial_options(exercise.eval = FALSE)
-
-## This code needs more work but it can in essence records answers and info about the user
-new_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
-    cat(tutorial_id, " (", tutorial_version, "): ", user_id, ", ", event, ", ", data$label, ", ", data$answers, ", ", data$correct, "\n", sep = "")
-}
-
-options(tutorial.event_recorder = new_recorder)
-
 ```
-
-Authentication for writing answers to a google sheets
 
 ```{r global, include=FALSE}
 #### Code for authenticating to a googlesheet to write grades to
@@ -35,7 +27,9 @@ library(magrittr)
 library(shiny)
 library(googlesheets4)
 library(googledrive)
+```
 
+```{r, include=FALSE}
 authenticate <- function() {
   # designate project-specific cache
   options(gargle_oauth_cache = ".secrets")
@@ -63,11 +57,23 @@ authenticate <- function() {
     )
   }
 }
+
+recorder <- function(tutorial_id, tutorial_version, user_id, event, data){
+  timestamp = Sys.time()
+
+  data$tutorial_id = tutorial_id
+  data$tutorial_version = tutorial_version
+  data$user_id = user_id
+  data$timestamp = timestamp
+
+  authenticate()
+  }
+options(tutorial.event_recorder = recorder)
 ```
 
 ## Overview
 
-Ask the student to give their email. If it is in our database, we will record it. But we can send them their final grade regardless. 
+Ask the student to give their email. If it is in our database, we will record it. But we can send them their final grade regardless.
 
 ```{r email, echo=FALSE}
 question_text(
@@ -139,4 +145,3 @@ question_text("Enter your swirl code.",
 ### Code to write answers to googlesheet
 
 ```
-
