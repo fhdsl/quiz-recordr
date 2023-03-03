@@ -30,6 +30,12 @@ library(googlesheets4)
 library(googledrive)
 ```
 
+```{r set-sheet, include=FALSE}
+sheet_url <- "https://docs.google.com/spreadsheets/d/1MSlsIJUegsDySU7EOK4gBvK5XjTNkyLArrHC7-jOXfs/edit#gid=0"
+
+sheet_id <- "Sheet1"
+```
+
 ```{r, include=FALSE}
 authenticate <- function() {
   # designate project-specific cache
@@ -39,8 +45,8 @@ authenticate <- function() {
   gargle::gargle_oauth_cache()
 
   if (interactive()) {
-    googlesheets4::gs4_deauth()
-    googlesheets4::gs4_auth(
+    googledrive::drive_deauth()
+    googledrive::drive_auth(
       email = "cansav09@gmail.com",
       path = NULL,
       scopes = c("https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"),
@@ -50,8 +56,8 @@ authenticate <- function() {
       token = NULL
     )
   } else {
-    googlesheets4::gs4_deauth()
-    googlesheets4::gs4_auth(
+    googledrive::drive_deauth()
+    googledrive::drive_auth(
       email = "cansav09@gmail.com",
       scopes = c("https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"),
       cache = ".secrets/"
@@ -67,12 +73,35 @@ recorder <- function(tutorial_id, tutorial_version, user_id, event, data){
   data$user_id = user_id
   data$timestamp = timestamp
 
-  authenticate()
+  recorded_answers <- data.frame()
+  # https://rstudio.github.io/learnr/articles/publishing.html#recording-events
+  
+  if (event == "question_submission" & data$label == "email") {
+    
+    recorded_answers <- data.frame(email = data$answer)
+    # Write email to googlesheet
+    
+    authenticate()
   }
+  # Only write things down if its a question submission
+  if (event == "question_submission" & !(data$label == "email")) {
+    
+    # This needs to be fixed 
+    colnames(recorded_answers) <- c("email", colnames(recorded_answers), data$label)
+  
+    recorded_answers["email", data$label] <- data$answer
+  
+    readr::write_tsv(recorded_answers, "recorded_answer.tsv")
+  
+    googlesheets4::sheet_write(
+        data = recorded_answers,
+        ss = googledrive::drive_get(id = sheet_url)$id,
+        sheet = "Sheet1"
+      )
+  }
+}
 options(tutorial.event_recorder = recorder)
 ```
-
-## Overview
 
 Ask the student to give their email. If it is in our database, we will record it. But we can send them their final grade regardless.
 
@@ -89,7 +118,6 @@ question_text(
 )
 ```
 
-
 Can include multiple choice questions like so:
 
 ```{r letter-a, echo=FALSE}
@@ -102,12 +130,6 @@ question(
 )
 ```
 
-
-```{r install-swirl, echo=FALSE}
-install.packages("swirl", repos='http://cran.us.r-project.org')
-library("swirl")
-swirl::install_course("DataTrail_02_Getting_Data")
-```
 
 Include some text here about how to go complete a swirl module
 
@@ -124,15 +146,11 @@ question_text("Enter your swirl code.",
 )
 ```
 
-```{r}
-## Include a "final submit" button so the student can send off their quiz answers
-
-```
 
 
 ```{r}
-## Look for recognized emails in a given database and only record the answers from those
-
+## Look for recognized emails in a given database and record all the quiz answers in the row of that email 
+  ### Code to write answers to googlesheet after an email is supplied
 ```
 
 
@@ -143,6 +161,6 @@ question_text("Enter your swirl code.",
 
 
 ```{r}
-### Code to write answers to googlesheet
+### Code to report the user's overall grade for this quiz to the user
 
 ```
